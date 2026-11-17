@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic UTM Builder for Performance Marketers</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --border: #334155;
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 720px;
+      width: 100%;
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    p.subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.5rem; }
+    .form-group { margin-bottom: 1.1rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: #cbd5e1; }
+    input, select {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #0f172a;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    .output-box {
+      margin-top: 1.5rem;
+      background: #0f172a;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      word-break: break-all;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: #38bdf8;
+      min-height: 60px;
+    }
+    .btn-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    button {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: white; flex: 1; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: #334155; color: var(--text); }
+    .btn-secondary:hover { background: #475569; }
+    .badge {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <span class="badge">Open-Source Marketing Tool</span>
+    <h1>Multi-Platform Dynamic UTM Builder</h1>
+    <p class="subtitle">Generate error-free tracking URLs with native dynamic parameters for Meta, TikTok, Snapchat, and Google Ads.</p>
+
+    <div class="form-group">
+      <label for="baseUrl">Landing Page URL *</label>
+      <input type="url" id="baseUrl" placeholder="https://example.com/product" value="https://example.com/" oninput="generateURL()" />
+    </div>
+
+    <div class="form-group">
+      <label for="platform">Ad Platform Preset (Auto-fills Dynamic Macros)</label>
+      <select id="platform" onchange="applyPreset()">
+        <option value="meta">Meta Ads (Facebook / Instagram)</option>
+        <option value="tiktok">TikTok Ads</option>
+        <option value="snapchat">Snapchat Ads</option>
+        <option value="google">Google Ads</option>
+        <option value="custom">Custom / Manual</option>
+      </select>
+    </div>
+
+    <div class="grid">
+      <div class="form-group">
+        <label for="utmSource">utm_source *</label>
+        <input type="text" id="utmSource" oninput="generateURL()" />
+      </div>
+      <div class="form-group">
+        <label for="utmMedium">utm_medium *</label>
+        <input type="text" id="utmMedium" oninput="generateURL()" />
+      </div>
+      <div class="form-group">
+        <label for="utmCampaign">utm_campaign</label>
+        <input type="text" id="utmCampaign" oninput="generateURL()" />
+      </div>
+      <div class="form-group">
+        <label for="utmContent">utm_content</label>
+        <input type="text" id="utmContent" oninput="generateURL()" />
+      </div>
+      <div class="form-group">
+        <label for="utmTerm">utm_term</label>
+        <input type="text" id="utmTerm" oninput="generateURL()" />
+      </div>
+      <div class="form-group">
+        <label for="customParam">Extra Custom Parameter (Optional)</label>
+        <input type="text" id="customParam" placeholder="e.g. ad_id={{ad.id}}" oninput="generateURL()" />
+      </div>
+    </div>
+
+    <div class="output-box" id="outputUrl">https://example.com/</div>
+
+    <div class="btn-row">
+      <button class="btn-primary" id="copyBtn" onclick="copyURL()">Copy Tracking URL</button>
+      <button class="btn-secondary" onclick="applyPreset()">Reset Macros</button>
+    </div>
+  </div>
+
+  <script>
+    const presets = {
+      meta: {
+        source: "facebook",
+        medium: "paid_social",
+        campaign: "{{campaign.name}}",
+        content: "{{ad.name}}",
+        term: "{{adset.name}}",
+        custom: "placement={{placement}}"
+      },
+      tiktok: {
+        source: "tiktok",
+        medium: "paid_social",
+        campaign: "__CAMPAIGN_NAME__",
+        content: "__CID_NAME__",
+        term: "__AID_NAME__",
+        custom: ""
+      },
+      snapchat: {
+        source: "snapchat",
+        medium: "paid_social",
+        campaign: "{{campaign.name}}",
+        content: "{{ad.name}}",
+        term: "{{adSet.name}}",
+        custom: ""
+      },
+      google: {
+        source: "google",
+        medium: "cpc",
+        campaign: "{campaignid}",
+        content: "{creative}",
+        term: "{keyword}",
+        custom: "matchtype={matchtype}"
+      },
+      custom: {
+        source: "",
+        medium: "",
+        campaign: "",
+        content: "",
+        term: "",
+        custom: ""
+      }
+    };
+
+    function applyPreset() {
+      const platform = document.getElementById("platform").value;
+      const p = presets[platform];
+      document.getElementById("utmSource").value = p.source;
+      document.getElementById("utmMedium").value = p.medium;
+      document.getElementById("utmCampaign").value = p.campaign;
+      document.getElementById("utmContent").value = p.content;
+      document.getElementById("utmTerm").value = p.term;
+      document.getElementById("customParam").value = p.custom;
+      generateURL();
+    }
+
+    function generateURL() {
+      let base = document.getElementById("baseUrl").value.trim();
+      if (!base) {
+        document.getElementById("outputUrl").textContent = "Please enter a valid landing page URL.";
+        return;
+      }
+
+      const params = [];
+      const fields = [
+        ["utm_source", document.getElementById("utmSource").value.trim()],
+        ["utm_medium", document.getElementById("utmMedium").value.trim()],
+        ["utm_campaign", document.getElementById("utmCampaign").value.trim()],
+        ["utm_content", document.getElementById("utmContent").value.trim()],
+        ["utm_term", document.getElementById("utmTerm").value.trim()]
+      ];
+
+      fields.forEach(([key, val]) => {
+        if (val) params.push(`${key}=${val}`);
+      });
+
+      const custom = document.getElementById("customParam").value.trim();
+      if (custom) params.push(custom);
+
+      const separator = base.includes("?") ? "&" : "?";
+      const finalUrl = params.length > 0 ? `${base}${separator}${params.join("&")}` : base;
+      document.getElementById("outputUrl").textContent = finalUrl;
+    }
+
+    function copyURL() {
+      const text = document.getElementById("outputUrl").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById("copyBtn");
+        btn.textContent = "Copied!";
+        btn.style.background = "#10b981";
+        setTimeout(() => {
+          btn.textContent = "Copy Tracking URL";
+          btn.style.background = "#3b82f6";
+        }, 1800);
+      });
+    }
+
+    // Initialize with Meta preset
+    applyPreset();
+  </script>
+</body>
+</html>
